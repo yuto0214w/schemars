@@ -5,7 +5,7 @@ use crate::idents::{GENERATOR, SCHEMA};
 use from_serde::FromSerde;
 use proc_macro2::TokenStream;
 use serde_derive_internals::ast as serde_ast;
-use serde_derive_internals::attr::VariantName;
+use serde_derive_internals::attr::{VariantMix, VariantName};
 use serde_derive_internals::{Ctxt, Derive};
 use std::collections::BTreeSet;
 
@@ -134,6 +134,12 @@ impl Field<'_> {
 }
 
 pub struct Names<'a, T: Clone + Ord>(&'a serde_derive_internals::attr::Names<T>);
+
+impl Names<'_, VariantName> {
+    pub fn to_literal(&self) -> TokenStream {
+        self.0.serialize_name().to_literal(VariantMix::Any)
+    }
+}
 
 impl<T: Clone + Ord + quote::ToTokens> quote::ToTokens for Names<'_, T> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
