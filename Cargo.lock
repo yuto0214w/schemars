@@ -497,9 +497,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.9.0"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cea70ddb795996207ad57735b50c5982d8844f38ba9ee5f1aedcfb708a2aa11e"
+checksum = "fe4cd85333e22411419a0bcae1297d25e58c9443848b11dc6a86fefe8c78a661"
 dependencies = [
  "equivalent",
  "hashbrown",
@@ -1011,7 +1011,7 @@ name = "serde"
 version = "1.0.208"
 source = "git+https://github.com/Astavie/serde.git?branch=integer-tags-for-enums#e210c70417fb37d0b63d27ea435b90874701247d"
 dependencies = [
- "serde_derive 1.0.208",
+ "serde_derive",
 ]
 
 [[package]]
@@ -1025,21 +1025,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_derive"
-version = "1.0.219"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "serde_derive_internals"
 version = "0.29.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
+source = "git+https://github.com/Astavie/serde.git?branch=integer-tags-for-enums#e210c70417fb37d0b63d27ea435b90874701247d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1241,7 +1229,7 @@ checksum = "1c9bf9513a2f4aeef5fdac8677d7d349c79fdbcc03b9c86da6e9d254f1e43be2"
 dependencies = [
  "glob",
  "serde",
- "serde_derive 1.0.219",
+ "serde_derive",
  "serde_json",
  "target-triple",
  "termcolor",
@@ -1310,7 +1298,7 @@ dependencies = [
  "once_cell",
  "regex",
  "serde",
- "serde_derive 1.0.219",
+ "serde_derive",
  "serde_json",
  "url",
  "validator_derive",

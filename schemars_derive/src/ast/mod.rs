@@ -5,6 +5,7 @@ use crate::idents::{GENERATOR, SCHEMA};
 use from_serde::FromSerde;
 use proc_macro2::TokenStream;
 use serde_derive_internals::ast as serde_ast;
+use serde_derive_internals::attr::VariantName;
 use serde_derive_internals::{Ctxt, Derive};
 use std::collections::BTreeSet;
 
@@ -81,8 +82,8 @@ impl<'a> Container<'a> {
 }
 
 impl Variant<'_> {
-    pub fn name(&self) -> Name {
-        Name(self.serde_attrs.name())
+    pub fn name(&self) -> Names<VariantName> {
+        Names(self.serde_attrs.name())
     }
 
     pub fn is_unit(&self) -> bool {
@@ -103,8 +104,8 @@ impl Variant<'_> {
 }
 
 impl Field<'_> {
-    pub fn name(&self) -> Name {
-        Name(self.serde_attrs.name())
+    pub fn name(&self) -> Names<String> {
+        Names(self.serde_attrs.name())
     }
 
     pub fn add_mutators(&self, mutators: &mut Vec<TokenStream>) {
@@ -132,9 +133,9 @@ impl Field<'_> {
     }
 }
 
-pub struct Name<'a>(&'a serde_derive_internals::attr::Name);
+pub struct Names<'a, T: Clone + Ord>(&'a serde_derive_internals::attr::Names<T>);
 
-impl quote::ToTokens for Name<'_> {
+impl<T: Clone + Ord + quote::ToTokens> quote::ToTokens for Names<'_, T> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ser_name = self.0.serialize_name();
         let de_name = self.0.deserialize_name();
