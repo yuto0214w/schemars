@@ -353,7 +353,7 @@ fn expr_for_internal_tagged_enum<'a>(
 
             let mut schema_expr = expr_for_internal_tagged_enum_variant(cont, variant, deny_unknown_fields);
 
-            let name = variant.name().to_literal();
+            let name = variant.name();
             schema_expr.mutators.push(quote!(
                 schemars::_private::apply_internal_enum_variant_tag(&mut #SCHEMA, #tag_name, #name, #deny_unknown_fields);
             ));
@@ -423,9 +423,10 @@ fn expr_for_adjacent_tagged_enum<'a>(
                 .unwrap_or_default();
 
             let name = variant.name();
+            let type_of_name = name.type_of();
             let tag_schema = quote! {
                 schemars::json_schema!({
-                    "type": "string",
+                    "type": #type_of_name,
                     "const": #name,
                 })
             };

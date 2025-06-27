@@ -135,13 +135,49 @@ impl Field<'_> {
 
 pub struct Names<'a, T: Clone + Ord>(&'a serde_derive_internals::attr::Names<T>);
 
-impl Names<'_, VariantName> {
-    pub fn to_literal(&self) -> TokenStream {
-        self.0.serialize_name().to_literal(VariantMix::Any)
+fn serialize_variant_name(name: &VariantName) -> TokenStream {
+    match name {
+        VariantName::String(s) => quote!(schemars::_private::ObjectKey::String(#s)),
+        VariantName::Integer(_) => {
+            let num = name.to_literal(VariantMix::Any);
+            quote!(schemars::_private::ObjectKey::int(#num))
+        }
+        VariantName::Boolean(b) => quote!(schemars::_private::ObjectKey::Boolean(#b)),
     }
 }
 
-impl<T: Clone + Ord + quote::ToTokens> quote::ToTokens for Names<'_, T> {
+impl Names<'_, VariantName> {
+    pub fn type_of(&self) -> &'static str {
+        match &self.0.serialize_name() {
+            VariantName::String(_) => "string",
+            VariantName::Integer(_) => "integer",
+            VariantName::Boolean(_) => "boolean",
+        }
+    }
+}
+
+impl quote::ToTokens for Names<'_, VariantName> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let ser_name = self.0.serialize_name();
+        let de_name = self.0.deserialize_name();
+        if ser_name == de_name {
+            serialize_variant_name(ser_name).to_tokens(tokens);
+        } else {
+            let ser_name = serialize_variant_name(ser_name);
+            let de_name = serialize_variant_name(de_name);
+            quote! {
+                if #GENERATOR.contract().is_serialize() {
+                    #ser_name
+                } else {
+                    #de_name
+                }
+            }
+            .to_tokens(tokens);
+        }
+    }
+}
+
+impl quote::ToTokens for Names<'_, String> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ser_name = self.0.serialize_name();
         let de_name = self.0.deserialize_name();

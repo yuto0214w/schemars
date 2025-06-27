@@ -156,9 +156,48 @@ impl<T: JsonSchema + ?Sized> MaybeJsonSchemaWrapper<T> {
     }
 }
 
+pub enum ObjectKey {
+    Integer(i64),
+    String(&'static str),
+    Boolean(bool)
+}
+
+impl ObjectKey {
+    pub fn int<T: TryInto<i64>>(v: T) -> Self where <T as TryInto<i64>>::Error: std::fmt::Debug {
+        Self::Integer(v.try_into().unwrap())
+    }
+}
+
+impl serde::Serialize for ObjectKey {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Boolean(v) => v.serialize(serializer),
+            Self::String(v) => v.serialize(serializer),
+            Self::Integer(v) => v.serialize(serializer),
+        }
+    }
+}
+
+impl Into<serde_json::Value> for ObjectKey {
+    fn into(self) -> serde_json::Value {
+        match self {
+            Self::Boolean(v) => serde_json::Value::Bool(v),
+            Self::String(v) => serde_json::Value::String(String::from(v)),
+            Self::Integer(v) => serde_json::Value::Number(serde_json::Number::from_i128(v.into()).unwrap()),
+        }
+    }
+}
+
 /// Create a schema for an externally tagged enum variant
 #[allow(clippy::needless_pass_by_value)]
-pub fn new_externally_tagged_enum_variant(variant: &str, sub_schema: Schema) -> Schema {
+pub fn new_externally_tagged_enum_variant(variant: ObjectKey, sub_schema: Schema) -> Schema {
+    let variant = match variant {
+        ObjectKey::Integer(v) => format!("{}", v),
+        ObjectKey::String(v) => String::from(v),
+        ObjectKey::Boolean(v) => format!("{}", v),
+    };
+    let variant = &variant;
+
     // TODO: this can be optimised by inserting the `sub_schema` as a `Value` rather than
     // using the `json_schema!` macro which borrows and serializes the sub_schema
     json_schema!({
@@ -175,7 +214,7 @@ pub fn new_externally_tagged_enum_variant(variant: &str, sub_schema: Schema) -> 
 pub fn apply_internal_enum_variant_tag(
     schema: &mut Schema,
     tag_name: &str,
-    variant: &str,
+    variant: ObjectKey,
     deny_unknown_fields: bool,
 ) {
     let obj = schema.ensure_object();
@@ -188,13 +227,35 @@ pub fn apply_internal_enum_variant_tag(
         .or_insert(Value::Object(Map::new()))
         .as_object_mut()
     {
-        properties.insert(
-            tag_name.to_string(),
-            json!({
-                "type": "string",
-                "const": variant
-            }),
-        );
+        match variant {
+            ObjectKey::String(variant) => {
+                properties.insert(
+                    tag_name.to_string(),
+                    json!({
+                        "type": "string",
+                        "const": variant
+                    }),
+                );
+            },
+            ObjectKey::Integer(variant) => {
+                properties.insert(
+                    tag_name.to_string(),
+                    json!({
+                        "type": "integer",
+                        "const": variant
+                    }),
+                );
+            },
+            ObjectKey::Boolean(variant) => {
+                properties.insert(
+                    tag_name.to_string(),
+                    json!({
+                        "type": "boolean",
+                        "const": variant
+                    }),
+                );
+            },
+        }
     }
 
     if let Some(required) = obj
